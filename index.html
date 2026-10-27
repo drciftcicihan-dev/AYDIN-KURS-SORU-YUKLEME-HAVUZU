@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soru Havuzu ve Sınav Paketleme Sistemi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- SheetJS (Excel Oluşturma) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- JSZip (Dosya Arşivleme) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-12">
+
+    <!-- Üst Başlık -->
+    <header class="bg-indigo-700 text-white shadow-md py-6 px-4 mb-8">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i>PENDİK AYDIN ÖZEL ÖĞRETİM KURSU ONLİNE SINAVLAR SORU HAVUZU HAZIRLAYAN: DR.CİHAN HOCA
+                </h1>
+                <p class="text-indigo-200 text-sm mt-1">Soru yükleme, dinamik sınıf/şube tanımlama ve Excel/ZIP aktarım aracı</p>
+            </div>
+            <div class="bg-indigo-800 px-4 py-2 rounded-lg text-xs font-medium border border-indigo-600">
+                Pendik Aydın Kurs Merkezi
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 space-y-6">
+
+        <!-- 1. Adım: Sınav ve Temel Bilgiler -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full inline-flex items-center justify-center text-sm font-bold">1</span> 
+                Sınav ve Öğretmen Bilgileri
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Öğretmen Adı</label>
+                    <input type="text" id="ogretmenAdi" placeholder="Örn: Ahmet_Yilmaz" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Ders Adı</label>
+                    <input type="text" id="dersAdi" placeholder="Örn: Matematik" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Sınav Adı</label>
+                    <input type="text" id="sinavAdi" placeholder="Örn: LGS_Deneme_1" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Adım: Hedef Sınıf ve Dinamik Şube Seçimi -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full inline-flex items-center justify-center text-sm font-bold">2</span> 
+                Hedef Sınıf ve Şube Seçimi
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Sınıf Seçimi -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-semibold text-slate-700">1. Sınıf Seçiniz</label>
+                        <div class="text-xs space-x-2">
+                            <button type="button" onclick="tumSiniflariSec(true)" class="text-indigo-600 hover:underline">Tümünü Seç</button>
+                            <button type="button" onclick="tumSiniflariSec(false)" class="text-slate-400 hover:underline">Temizle</button>
+                        </div>
+                    </div>
+                    <div id="sinifKonteyner" class="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                        <!-- JS ile Doldurulacak -->
+                    </div>
+                </div>
+
+                <!-- Şube Seçimi (Sınıfa göre dinamik açılır) -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-semibold text-slate-700">2. Uygun Şubeler</label>
+                        <div class="text-xs space-x-2">
+                            <button type="button" onclick="tumSubeleriSec(true)" class="text-indigo-600 hover:underline">Tümünü Seç</button>
+                            <button type="button" onclick="tumSubeleriSec(false)" class="text-slate-400 hover:underline">Temizle</button>
+                        </div>
+                    </div>
+                    <div id="subeKonteyner" class="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg min-h-[96px] items-center">
+                        <span class="text-xs text-slate-400 italic">Lütfen önce sınıf seçimi yapınız.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Adım: Soru Görsellerini Yükleme -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full inline-flex items-center justify-center text-sm font-bold">3</span> 
+                Soru Görsellerini Seçin
+            </h2>
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-500 transition-colors bg-slate-50 cursor-pointer" onclick="document.getElementById('soruDosyalari').click()">
+                <i class="fa-solid fa-cloud-arrow-up text-4xl text-indigo-500 mb-3"></i>
+                <p class="text-sm font-medium text-slate-700">Bilgisayarınızdan soru resimlerini seçmek için tıklayın</p>
+                <p class="text-xs text-slate-400 mt-1">PNG, JPG formatları desteklenir. (Sıralı olarak listelenecektir)</p>
+                <input type="file" id="soruDosyalari" multiple accept="image/*" class="hidden" onchange="sorulariIsle(event)">
+            </div>
+        </section>
+
+        <!-- 4. Adım: Önizleme ve Doğru Cevap Girişi -->
+        <section id="onizlemeBolumu" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                <h2 class="text-lg font-semibold text-slate-700 flex items-center gap-2">
+                    <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full inline-flex items-center justify-center text-sm font-bold">4</span> 
+                    Sıralı Önizleme ve Doğru Cevap Girişi
+                </h2>
+                <div class="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">
+                    Toplam Soru: <span id="toplamSoruSayisi" class="font-bold text-indigo-600">0</span>
+                </div>
+            </div>
+
+            <!-- Soru Liste Tablosu -->
+            <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-4 w-20">Soru No</th>
+                            <th class="py-3 px-4 w-32">Görsel</th>
+                            <th class="py-3 px-4">Oluşacak Soru URL (Yol)</th>
+                            <th class="py-3 px-4 w-40">Doğru Cevap</th>
+                        </tr>
+                    </thead>
+                    <tbody id="soruListesiGovde" class="divide-y divide-slate-200 text-sm"></tbody>
+                </table>
+            </div>
+
+            <!-- Kaydet ve İndir Butonu -->
+            <div class="mt-6 flex justify-end">
+                <button onclick="sistemiOlusturVeIndir()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-3 rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-file-excel"></i> Excel ve Paketi Oluştur & İndir
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const sinifListesi = ["7", "8", "9", "10", "11", "12", "MEZUN"];
+
+        // Şube Grupları
+        const harfSubeleri = ["A", "B", "C", "D", "E", "F", "G", "H"];
+        
+        const liseSubeleri = [
+            "MF-5", "MF-6", "MF-7", "MF-8", "MF-9", "MF-10", "MF-11",
+            "TM-5", "TM-6", "TM-7", "TM-8", "TM-9", "TM-10", "TM-11"
+        ];
+
+        const mezunSubeleri = [
+            "MMF-5", "MMF-6", "MMF-7", "MMF-8", "MMF-9", "MMF-10", "MMF-11",
+            "MTM-5", "MTM-6", "MTM-7", "MTM-8", "MTM-9", "MTM-10", "MTM-11"
+        ];
+
+        let yuklenenSorular = [];
+
+        window.onload = function() {
+            // Sınıf Seçeneklerini Yükle
+            const sinifKonteyner = document.getElementById('sinifKonteyner');
+            sinifListesi.forEach(s => {
+                const label = document.createElement('label');
+                label.className = "inline-flex items-center gap-1.5 text-xs font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors";
+                label.innerHTML = `<input type="checkbox" value="${s}" onchange="subeleriGuncelle()" class="sinif-cb text-indigo-600 rounded focus:ring-indigo-500"> ${s}. Sınıf`;
+                sinifKonteyner.appendChild(label);
+            });
+
+            // Varsayılan olarak 8. Sınıfı seçip şubeleri tetikleyelim
+            const varsayilanSinif = document.querySelector('.sinif-cb[value="8"]');
+            if (varsayilanSinif) {
+                varsayilanSinif.checked = true;
+                subeleriGuncelle();
+            }
+        };
+
+        function tumSiniflariSec(durum) {
+            document.querySelectorAll('.sinif-cb').forEach(cb => cb.checked = durum);
+            subeleriGuncelle();
+        }
+
+        function tumSubeleriSec(durum) {
+            document.querySelectorAll('.sube-cb').forEach(cb => cb.checked = durum);
+        }
+
+        function subeleriGuncelle() {
+            const secilenSiniflar = Array.from(document.querySelectorAll('.sinif-cb:checked')).map(cb => cb.value);
+            const subeKonteyner = document.getElementById('subeKonteyner');
+
+            // Mevcut seçili olan şubelerin isimlerini aklımızda tutalım
+            const oncekiSeciliSubeler = Array.from(document.querySelectorAll('.sube-cb:checked')).map(cb => cb.value);
+
+            let acilacakSubeler = new Set();
+
+            secilenSiniflar.forEach(s => {
+                if (["7", "8", "9", "10"].includes(s)) {
+                    harfSubeleri.forEach(sube => acilacakSubeler.add(sube));
+                }
+                if (["11", "12"].includes(s)) {
+                    liseSubeleri.forEach(sube => acilacakSubeler.add(sube));
+                }
+                if (s === "MEZUN") {
+                    mezunSubeleri.forEach(sube => acilacakSubeler.add(sube));
+                }
+            });
+
+            subeKonteyner.innerHTML = '';
+
+            if (acilacakSubeler.size === 0) {
+                subeKonteyner.innerHTML = `<span class="text-xs text-slate-400 italic">Lütfen önce sınıf seçimi yapınız.</span>`;
+                return;
+            }
+
+            Array.from(acilacakSubeler).forEach(sb => {
+                const isChecked = oncekiSeciliSubeler.length > 0 ? oncekiSeciliSubeler.includes(sb) : true;
+                const label = document.createElement('label');
+                label.className = "inline-flex items-center gap-1.5 text-xs font-medium bg-white px-2.5 py-1 rounded border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors";
+                label.innerHTML = `<input type="checkbox" value="${sb}" ${isChecked ? 'checked' : ''} class="sube-cb text-indigo-600 rounded"> ${sb}`;
+                subeKonteyner.appendChild(label);
+            });
+        }
+
+        function sorulariIsle(event) {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+
+            files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+            yuklenenSorular = files.map((file, index) => {
+                return {
+                    no: index + 1,
+                    file: file,
+                    fileName: `SORU${index + 1}.png`,
+                    cevap: ''
+                };
+            });
+
+            tabloyuGuncelle();
+        }
+
+        function tabloyuGuncelle() {
+            const tbody = document.getElementById('soruListesiGovde');
+            const bolum = document.getElementById('onizlemeBolumu');
+            const toplamSpan = document.getElementById('toplamSoruSayisi');
+
+            tbody.innerHTML = '';
+            toplamSpan.textContent = yuklenenSorular.length;
+
+            if (yuklenenSorular.length > 0) {
+                bolum.classList.remove('hidden');
+            } else {
+                bolum.classList.add('hidden');
+                return;
+            }
+
+            const ogretmen = document.getElementById('ogretmenAdi').value.trim() || 'Ogretmen';
+            const ders = document.getElementById('dersAdi').value.trim() || 'Ders';
+            const sinav = document.getElementById('sinavAdi').value.trim() || 'Sinav';
+
+            yuklenenSorular.forEach((soru, index) => {
+                const urlYolu = `${ogretmen}/${ders}/${sinav}/${soru.fileName}`;
+                const objectUrl = URL.createObjectURL(soru.file);
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-700">Soru ${soru.no}</td>
+                    <td class="py-3 px-4">
+                        <img src="${objectUrl}" alt="Soru ${soru.no}" class="w-20 h-16 object-cover rounded border border-slate-200 shadow-xs">
+                    </td>
+                    <td class="py-3 px-4 font-mono text-xs text-indigo-600">${urlYolu}</td>
+                    <td class="py-3 px-4">
+                        <select onchange="cevapGuncelle(${index}, this.value)" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold text-slate-700">
+                            <option value="">Seçiniz</option>
+                            <option value="A" ${soru.cevap === 'A' ? 'selected' : ''}>A</option>
+                            <option value="B" ${soru.cevap === 'B' ? 'selected' : ''}>B</option>
+                            <option value="C" ${soru.cevap === 'C' ? 'selected' : ''}>C</option>
+                            <option value="D" ${soru.cevap === 'D' ? 'selected' : ''}>D</option>
+                            <option value="E" ${soru.cevap === 'E' ? 'selected' : ''}>E</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('ogretmenAdi').addEventListener('input', tabloyuGuncelle);
+        document.getElementById('dersAdi').addEventListener('input', tabloyuGuncelle);
+        document.getElementById('sinavAdi').addEventListener('input', tabloyuGuncelle);
+
+        function cevapGuncelle(index, deger) {
+            yuklenenSorular[index].cevap = deger;
+        }
+
+        async function sistemiOlusturVeIndir() {
+            if (yuklenenSorular.length === 0) {
+                alert('Lütfen en az bir soru görseli yükleyin.');
+                return;
+            }
+
+            const ogretmen = document.getElementById('ogretmenAdi').value.trim() || 'Ogretmen';
+            const ders = document.getElementById('dersAdi').value.trim() || 'Ders';
+            const sinav = document.getElementById('sinavAdi').value.trim() || 'Sinav';
+
+            // Seçilen Sınıf ve Şubeleri Toplama
+            const secilenSiniflar = Array.from(document.querySelectorAll('.sinif-cb:checked')).map(cb => cb.value).join(' ');
+            const secilenSubeler = Array.from(document.querySelectorAll('.sube-cb:checked')).map(cb => cb.value).join(' ');
+
+            // Excel Verilerini Birebir Görseldeki Sütun Başlıkları ile Hazırlama
+            const excelVerisi = yuklenenSorular.map((soru, index) => {
+                const isFirst = index === 0;
+                return {
+                    "SoruNo": soru.no,
+                    "SoruUrl": `${ogretmen}/${ders}/${sinav}/${soru.fileName}`,
+                    "DogruCevap": soru.cevap,
+                    "SinifSuresiDk": isFirst ? 120 : '',
+                    "HedefSiniflar": isFirst ? secilenSiniflar : '',
+                    "HedefŞube": isFirst ? secilenSubeler : '',
+                    "BaşlangıcTarihi": '',
+                    "BaşlangıcSaati": '',
+                    "BitisTarihi": '',
+                    "BitisSaati": ''
+                };
+            });
+
+            // Excel Çalışma Sayfası ve Kitabı Oluşturma
+            const worksheet = XLSX.utils.json_to_sheet(excelVerisi);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "SoruListesi");
+
+            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const excelBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+            // ZIP Dosyası Oluşturma
+            const zip = new JSZip();
+            const klasorAdi = `${ogretmen}_${ders}_${sinav}`;
+            const altKlasor = zip.folder(ogretmen).folder(ders).folder(sinav);
+
+            for (const soru of yuklenenSorular) {
+                const arrayBuffer = await soru.file.arrayBuffer();
+                altKlasor.file(soru.fileName, arrayBuffer);
+            }
+
+            // Excel dosyasını da pakete ekle
+            zip.file(`${sinav}_Soru_Listesi.xlsx`, excelBlob);
+
+            zip.generateAsync({ type: 'blob' }).then(function(content) {
+                saveAs(content, `${klasorAdi}_SoruPaketi.zip`);
+            });
+        }
+    </script>
+</body>
+</html>
